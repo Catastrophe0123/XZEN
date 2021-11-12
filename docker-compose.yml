@@ -1,25 +1,26 @@
 services:
-  server:
-    container_name: server-container
-    restart: always
-    build: ./
-    ports:
-      - '5000:5000'
-    volumes:
-      - ./server:/usr/src/app/server
-    links:
-      - mongo
-  client:
-    container_name: client-container
-    restart: always
-    build: ./frontend
-    volumes:
-      - ./client:/usr/src/app/client
-    ports:
-      - '3000:3000'
-  mongo:
-    hostname: mongo
-    restart: always
-    image: mongo
-    ports:
-      - '27017:27017'
+    server:
+        build: ./
+        ports:
+            - '5000:5000'
+        # volumes:
+        #     - ./server:/usr/src/app/server
+        depends_on:
+            mongo:
+                condition: service_healthy
+    client:
+        build: ./frontend
+        # volumes:
+        #     - ./client:/usr/src/app/client
+        ports:
+            - '3000:3000'
+    mongo:
+        image: mongo
+        ports:
+            - '27017:27017'
+        healthcheck:
+            test: echo 'db.runCommand("ping").ok' | mongo mongo:27017/test --quiet
+            interval: 10s
+            timeout: 10s
+            retries: 5
+            start_period: 40s
